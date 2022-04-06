@@ -169,4 +169,19 @@ defmodule Cocktail.WeeklyTest do
              ~Y[2022-03-26 06:00:00 America/Los_Angeles]
            ]
   end
+
+  test "With count" do
+    times =
+      ~Y[2017-01-01 06:00:00 America/Los_Angeles]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:weekly, count: 3)
+      |> Cocktail.Schedule.occurrences()
+      |> Enum.take(50)
+
+    assert times == [
+             ~Y[2017-01-01 06:00:00 America/Los_Angeles],
+             ~Y[2017-01-08 06:00:00 America/Los_Angeles],
+             ~Y[2017-01-15 06:00:00 America/Los_Angeles]
+           ]
+  end
 end
