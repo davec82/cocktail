@@ -8,7 +8,7 @@ defmodule Cocktail do
 
   alias Cocktail.{Schedule, Span}
 
-  @type frequency :: :monthly | :weekly | :daily | :hourly | :minutely | :secondly
+  @type frequency :: :yearly | :monthly | :weekly | :daily | :hourly | :minutely | :secondly
 
   @type day_number :: 0..6
   @type day_of_month :: -31..-1 | 1..31
@@ -17,7 +17,11 @@ defmodule Cocktail do
 
   @type day :: day_number | day_atom
 
+  @type nday :: {integer, day_number} | {integer, day_atom}
+
   @type hour_number :: 0..23
+
+  @type month_of_year :: 1..12
 
   @type minute_number :: 0..59
 
@@ -41,7 +45,9 @@ defmodule Cocktail do
           | {:days, [day]}
           | {:days_of_month, [day_of_month]}
           | {:hours, [hour_number]}
+          | {:months_of_year, [month_of_year]}
           | {:minutes, [minute_number]}
+          | {:ndays, [nday]}
           | {:seconds, [second_number]}
           | {:times, [Time.t()]}
           | {:time_range, time_range}

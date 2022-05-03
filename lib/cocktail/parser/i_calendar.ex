@@ -8,6 +8,8 @@ defmodule Cocktail.Parser.ICalendar do
   alias Cocktail.{Rule, Schedule}
 
   @time_regex ~r/^:?;?(?:TZID=(.+?):)?(.*?)(Z)?$/
+  @nday_regex ~r/([+-]?\d+)(.*)/
+  @ndays_regex ~r/[0-9]+/
   @datetime_format "{YYYY}{0M}{0D}T{h24}{m}{s}"
   @time_format "{h24}{m}{s}"
 
@@ -159,6 +161,12 @@ defmodule Cocktail.Parser.ICalendar do
     end
   end
 
+  defp parse_rrule_option("BYMONTH=" <> ymonths_string) do
+    with {:ok, ymonths} <- parse_ymonths_string(ymonths_string) do
+      {:ok, {:months_of_year, ymonths}}
+    end
+  end
+
   defp parse_rrule_option("BYMONTHDAY=" <> mdays_string) do
     with {:ok, mdays} <- parse_mdays_string(mdays_string) do
       {:ok, {:days_of_month, mdays}}
@@ -166,8 +174,16 @@ defmodule Cocktail.Parser.ICalendar do
   end
 
   defp parse_rrule_option("BYDAY=" <> days_string) do
-    with {:ok, days} <- parse_days_string(days_string) do
-      {:ok, {:days, days |> Enum.reverse()}}
+    case Regex.match?(@ndays_regex, days_string) do
+      false ->
+        with {:ok, days} <- parse_days_string(days_string) do
+          {:ok, {:days, days |> Enum.reverse()}}
+        end
+
+      true ->
+        with {:ok, days} <- parse_ndays_string(days_string) do
+          {:ok, {:ndays, days}}
+        end
     end
   end
 
@@ -207,6 +223,7 @@ defmodule Cocktail.Parser.ICalendar do
   defp parse_rrule_option(_), do: {:error, :unknown_rrulparam}
 
   @spec parse_frequency(String.t()) :: {:ok, Cocktail.frequency()} | {:error, :invalid_frequency}
+  defp parse_frequency("YEARLY"), do: {:ok, :yearly}
   defp parse_frequency("MONTHLY"), do: {:ok, :monthly}
   defp parse_frequency("WEEKLY"), do: {:ok, :weekly}
   defp parse_frequency("DAILY"), do: {:ok, :daily}
@@ -269,6 +286,36 @@ defmodule Cocktail.Parser.ICalendar do
     end
   end
 
+  @spec parse_ymonths_string(String.t()) :: {:ok, [Cocktail.month_of_year()]} | {:error, :invalid_ymonth}
+  defp parse_ymonths_string(mdays_string) do
+    mdays_string
+    |> String.split(",")
+    |> parse_ymonths([])
+  end
+
+  @spec parse_ymonths([String.t()], [Cocktail.month_of_year()]) :: {:ok, [Cocktail.month_of_year()]}
+  defp parse_ymonths([], ymonths), do: {:ok, ymonths}
+
+  defp parse_ymonths([ymonth_string | rest], ymonths) do
+    with {:ok, ymonth} <- parse_ymonth(ymonth_string) do
+      parse_ymonths(rest, [ymonth | ymonths])
+    end
+  end
+
+  @spec parse_ymonth(String.t()) :: {:ok, Cocktail.month_of_year()} | {:error, :invalid_ymonth}
+  defp parse_ymonth(ymonth_string) do
+    case Integer.parse(ymonth_string) do
+      {ymonth, ""} ->
+        if ymonth in 1..12, do: {:ok, ymonth}, else: {:error, :invalid_ymonth}
+
+      {_ymonth, _remainder} ->
+        {:error, :invalid_ymonth}
+
+      :error ->
+        {:error, :invalid_ymonth}
+    end
+  end
+
   @spec parse_days_string(String.t()) :: {:ok, [Cocktail.day_atom()]} | {:error, :invalid_days}
   defp parse_days_string(""), do: {:error, :invalid_days}
 
@@ -276,6 +323,13 @@ defmodule Cocktail.Parser.ICalendar do
     days_string
     |> String.split(",")
     |> parse_days([])
+  end
+
+  @spec parse_ndays_string(String.t()) :: {:ok, [Cocktail.day_atom()]} | {:error, :invalid_days}
+  defp parse_ndays_string(days_string) do
+    days_string
+    |> String.split(",")
+    |> parse_ndays([])
   end
 
   @spec parse_days([String.t()], [Cocktail.day_atom()]) :: {:ok, [Cocktail.day_atom()]}
@@ -296,6 +350,28 @@ defmodule Cocktail.Parser.ICalendar do
   defp parse_day("FR"), do: {:ok, :friday}
   defp parse_day("SA"), do: {:ok, :saturday}
   defp parse_day(_), do: {:error, :invalid_day}
+
+  @spec parse_ndays([String.t()], [{integer, Cocktail.day_atom()}]) :: {:ok, [Cocktail.day_atom()]}
+  defp parse_ndays([], days), do: {:ok, days}
+
+  defp parse_ndays([day_string | rest], days) do
+    with {:ok, day} <- parse_nday(day_string) do
+      parse_ndays(rest, [day | days])
+    end
+  end
+
+  @spec parse_nday(String.t()) :: {:ok, {integer, Cocktail.day_atom()}} | {:error, :invalid_day}
+  defp parse_nday(day_string) do
+    case Regex.run(@nday_regex, day_string) do
+      [_, nth, wday] ->
+        {n, _} = Integer.parse(nth)
+        {:ok, day} = parse_day(wday)
+        {:ok, {n, day}}
+
+      _ ->
+        {:error, :invalid_day}
+    end
+  end
 
   # hour of day
 

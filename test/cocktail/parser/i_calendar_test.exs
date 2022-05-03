@@ -2,7 +2,18 @@ defmodule Cocktail.Parser.ICalendarTest do
   use ExUnit.Case
 
   alias Cocktail.Rule
-  alias Cocktail.Validation.{Day, DayOfMonth, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay}
+
+  alias Cocktail.Validation.{
+    Day,
+    DayOfMonth,
+    HourOfDay,
+    Interval,
+    MinuteOfHour,
+    MonthOfYear,
+    Nday,
+    SecondOfMinute,
+    TimeOfDay
+  }
 
   import Cocktail.Parser.ICalendar
   import Cocktail.TestSupport.DateTimeSigil
@@ -61,6 +72,17 @@ defmodule Cocktail.Parser.ICalendarTest do
     end
   end
 
+  test "parse a schedule with a monthly rrule with days with nth occurrence of a specific day" do
+    schedule_string = """
+    DTSTART:20170810T160000
+    RRULE:FREQ=MONTHLY;INTERVAL=2;BYDAY=3MO,2WE,-1FR
+    """
+
+    assert {:ok, schedule} = parse(schedule_string)
+    assert [%Rule{} = rule] = schedule.recurrence_rules
+    assert rule.validations[:nday] == %Nday{days: [{-1, 5}, {2, 3}, {3, 1}], offset: :monthly}
+  end
+
   test "parse a schedule with a weekly rrule with days and hours" do
     schedule_string = """
     DTSTART:20170810T160000
@@ -104,6 +126,17 @@ defmodule Cocktail.Parser.ICalendarTest do
     assert {:ok, schedule} = parse(schedule_string)
     assert [%Rule{} = rule] = schedule.recurrence_rules
     assert rule.validations[:day_of_month] == %DayOfMonth{days: [-1]}
+  end
+
+  test "parse a schedule with a yearly rrule" do
+    schedule_string = """
+    DTSTART:20170131T090000
+    RRULE:FREQ=YEARLY;BYMONTH=2
+    """
+
+    assert {:ok, schedule} = parse(schedule_string)
+    assert [%Rule{} = rule] = schedule.recurrence_rules
+    assert rule.validations[:month_of_year] == %MonthOfYear{months: [2]}
   end
 
   test "parse a pre-0.8 schedule with a BYTIME option to an rrule" do
@@ -304,5 +337,23 @@ defmodule Cocktail.Parser.ICalendarTest do
     """
 
     assert {:error, _reason} = parse(schedule_string)
+  end
+
+  test "parse a schedule with an rrule with an invalid month" do
+    schedule_string = """
+    DTSTART:20170810T160000
+    RRULE:FREQ=YEARLY;INTERVAL=2;BYMONTH=28
+    """
+
+    assert {:error, {:invalid_ymonth, 1}} = parse(schedule_string)
+  end
+
+  test "parse a schedule with an rrule with empty month" do
+    schedule_string = """
+    DTSTART:20170810T160000
+    RRULE:FREQ=YEARLY;INTERVAL=2;BYMONTH=
+    """
+
+    assert {:error, {:invalid_ymonth, 1}} = parse(schedule_string)
   end
 end

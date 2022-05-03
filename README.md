@@ -65,6 +65,7 @@ iex> schedule = Cocktail.schedule(start_time, opts)
 
 Schedules are pretty useless on their own. To have them do something useful, you add recurrence rules to them. Currently, Cocktail supports:
 
+-   Yearly
 -   Monthly
 -   Weekly
 -   Daily

@@ -18,6 +18,15 @@ defmodule Cocktail.Validation.Interval do
   @spec next_time(t, Cocktail.time(), Cocktail.time()) :: Cocktail.Validation.Shift.result()
   def next_time(%__MODULE__{type: _, interval: 1}, time, _), do: {:no_change, time}
 
+  def next_time(%__MODULE__{type: :yearly, interval: interval}, time, start_time) do
+    start_time
+    |> Timex.beginning_of_year()
+    |> Timex.diff(Timex.beginning_of_year(time), :years)
+    |> mod(interval)
+    |> shift_by(:years, time)
+    |> maybe_change_to_beginning_month()
+  end
+
   def next_time(%__MODULE__{type: :monthly, interval: interval}, time, start_time) do
     start_time
     |> Timex.beginning_of_month()
@@ -79,4 +88,7 @@ defmodule Cocktail.Validation.Interval do
   defp unit_for_type(:hourly), do: :hours
   defp unit_for_type(:minutely), do: :minutes
   defp unit_for_type(:secondly), do: :seconds
+
+  defp maybe_change_to_beginning_month({:no_change, time}), do: {:no_change, time}
+  defp maybe_change_to_beginning_month({:change, time}), do: {:change, Timex.beginning_of_month(time)}
 end

@@ -6,7 +6,20 @@ defmodule Cocktail.Builder.ICalendar do
   """
 
   alias Cocktail.{Rule, Schedule, Validation}
-  alias Cocktail.Validation.{Day, DayOfMonth, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay, TimeRange}
+
+  alias Cocktail.Validation.{
+    Day,
+    DayOfMonth,
+    HourOfDay,
+    Interval,
+    MinuteOfHour,
+    MonthOfYear,
+    MonthOfYearByDay,
+    Nday,
+    SecondOfMinute,
+    TimeOfDay,
+    TimeRange
+  }
 
   @time_format_string "{YYYY}{0M}{0D}T{h24}{m}{s}"
 
@@ -126,7 +139,9 @@ defmodule Cocktail.Builder.ICalendar do
             :day,
             :day_of_month,
             :hour_of_day,
+            :month_of_year,
             :minute_of_hour,
+            :nday,
             :second_of_minute,
             :time_of_day,
             :time_range
@@ -145,7 +160,10 @@ defmodule Cocktail.Builder.ICalendar do
   defp build_validation_part(:interval, %Interval{interval: interval, type: type}), do: build_interval(type, interval)
   defp build_validation_part(:day_of_month, %DayOfMonth{days: days}), do: days |> build_days_of_month()
   defp build_validation_part(:day, %Day{days: days}), do: days |> build_days()
+  defp build_validation_part(:nday, %Nday{days: days}), do: days |> build_ndays()
   defp build_validation_part(:hour_of_day, %HourOfDay{hours: hours}), do: hours |> build_hours()
+  defp build_validation_part(:month_of_year, %MonthOfYear{months: months}), do: months |> build_months_of_year()
+  defp build_validation_part(:month_of_year, %MonthOfYearByDay{months: months}), do: months |> build_months_of_year()
   defp build_validation_part(:minute_of_hour, %MinuteOfHour{minutes: minutes}), do: minutes |> build_minutes()
   defp build_validation_part(:second_of_minute, %SecondOfMinute{seconds: seconds}), do: seconds |> build_seconds()
   defp build_validation_part(:time_of_day, %TimeOfDay{times: times}), do: times |> build_times()
@@ -181,6 +199,16 @@ defmodule Cocktail.Builder.ICalendar do
     "BYMONTHDAY=#{days_list}"
   end
 
+  @spec build_ndays([{integer, Cocktail.day_number()}]) :: String.t()
+  defp build_ndays(days) do
+    days_list =
+      days
+      |> Enum.map(&by_nday/1)
+      |> Enum.join(",")
+
+    "BYDAY=#{days_list}"
+  end
+
   @spec build_days([Cocktail.day_number()]) :: String.t()
   defp build_days(days) do
     days_list =
@@ -190,6 +218,12 @@ defmodule Cocktail.Builder.ICalendar do
       |> Enum.join(",")
 
     "BYDAY=#{days_list}"
+  end
+
+  @spec by_nday({integer, Cocktail.day_number()}) :: String.t()
+  defp by_nday({nday, wday}) do
+    day = by_day(wday)
+    "#{nday}#{day}"
   end
 
   @spec by_day(Cocktail.day_number()) :: String.t()
@@ -211,6 +245,19 @@ defmodule Cocktail.Builder.ICalendar do
       |> Enum.join(",")
 
     "BYHOUR=#{hours_list}"
+  end
+
+  # "month of year" validation
+
+  @spec build_months_of_year([Cocktail.month_of_year()]) :: String.t()
+  defp build_months_of_year(days) do
+    days_list =
+      days
+      |> Enum.sort()
+      |> Enum.map(&to_string/1)
+      |> Enum.join(",")
+
+    "BYMONTH=#{days_list}"
   end
 
   # "minute of hour" validation

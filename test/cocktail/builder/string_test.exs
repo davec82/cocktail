@@ -27,6 +27,28 @@ defmodule Cocktail.Builder.StringTest do
     assert string == "Weekly on Mondays"
   end
 
+  test "build a schedule with a BYDAY option with occurrence" do
+    schedule =
+      ~N[2017-01-01 09:00:00]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:monthly, ndays: [{-1, :monday}, {5, :wednesday}, {3, :friday}])
+
+    string = Schedule.to_string(schedule)
+
+    assert string == "Monthly on first to last Monday, third Friday and 5th Wednesday"
+  end
+
+  test "build a yearly schedule with a BYDAY option with occurrence" do
+    schedule =
+      ~N[2017-01-01 09:00:00]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:yearly, ndays: [{-6, :sunday}, {5, :tuesday}, {2, :thursday}, {30, :saturday}])
+
+    string = Schedule.to_string(schedule)
+
+    assert string == "Yearly on 6th to last Sunday, second Thursday, 5th Tuesday and 30th Saturday"
+  end
+
   test "build a schedule with a BYHOUR option" do
     schedule =
       ~N[2017-01-01 09:00:00]
@@ -179,5 +201,27 @@ defmodule Cocktail.Builder.StringTest do
     string = Schedule.to_string(schedule)
 
     assert string == "Every 2 months"
+  end
+
+  test "every year" do
+    schedule =
+      ~N[2017-01-01 09:00:00]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:yearly)
+
+    string = Schedule.to_string(schedule)
+
+    assert string == "Yearly"
+  end
+
+  test "every 2 year" do
+    schedule =
+      ~N[2017-01-01 09:00:00]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:yearly, interval: 2)
+
+    string = Schedule.to_string(schedule)
+
+    assert string == "Every 2 years"
   end
 end

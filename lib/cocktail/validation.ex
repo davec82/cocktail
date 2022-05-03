@@ -7,6 +7,9 @@ defmodule Cocktail.Validation do
     HourOfDay,
     Interval,
     MinuteOfHour,
+    MonthOfYear,
+    MonthOfYearByDay,
+    Nday,
     ScheduleLock,
     SecondOfMinute,
     TimeOfDay,
@@ -19,10 +22,13 @@ defmodule Cocktail.Validation do
           | :base_hour
           | :base_wday
           | :base_mday
+          | :base_yday
           | :day
           | :day_of_month
           | :hour_of_day
+          | :month_of_year
           | :minute_of_hour
+          | :nday
           | :second_of_minute
           | :time_of_day
           | :time_range
@@ -36,10 +42,14 @@ defmodule Cocktail.Validation do
           | Day.t()
           | DayOfMonth.t()
           | HourOfDay.t()
+          | MonthOfYear.t()
           | MinuteOfHour.t()
+          | NDay.t()
           | SecondOfMinute.t()
           | TimeOfDay.t()
           | TimeRange.t()
+
+  @rule_days [:days, :days_of_month, :ndays, :day, :nday, :day_of_month]
 
   @spec build_validations(Cocktail.rule_options()) :: validations_map
   def build_validations(options) do
@@ -52,6 +62,16 @@ defmodule Cocktail.Validation do
   end
 
   @spec build_basic_interval_validations(Cocktail.frequency(), pos_integer) :: validations_map
+  defp build_basic_interval_validations(:yearly, interval) do
+    %{
+      base_sec: ScheduleLock.new(:second),
+      base_min: ScheduleLock.new(:minute),
+      base_hour: ScheduleLock.new(:hour),
+      base_yday: ScheduleLock.new(:yday),
+      interval: Interval.new(:yearly, interval)
+    }
+  end
+
   defp build_basic_interval_validations(:monthly, interval) do
     %{
       base_sec: ScheduleLock.new(:second),
@@ -105,9 +125,20 @@ defmodule Cocktail.Validation do
   @spec apply_options(validations_map, Cocktail.rule_options()) :: validations_map
   defp apply_options(map, []), do: map
 
+  defp apply_options(map, [{:months_of_year, months_of_year} | rest]) when length(months_of_year) > 0 do
+    mod = get_module_month_year(map, rest)
+
+    map
+    |> Map.delete(:base_mday)
+    |> Map.delete(:base_yday)
+    |> Map.put(:month_of_year, mod.new(months_of_year))
+    |> apply_options(rest)
+  end
+
   defp apply_options(map, [{:days_of_month, days_of_month} | rest]) when length(days_of_month) > 0 do
     map
     |> Map.delete(:base_mday)
+    |> Map.delete(:base_yday)
     |> Map.put(:day_of_month, DayOfMonth.new(days_of_month))
     |> apply_options(rest)
   end
@@ -116,7 +147,19 @@ defmodule Cocktail.Validation do
     map
     |> Map.delete(:base_wday)
     |> Map.delete(:base_mday)
+    |> Map.delete(:base_yday)
     |> Map.put(:day, Day.new(days))
+    |> apply_options(rest)
+  end
+
+  defp apply_options(map, [{:ndays, days} | rest]) when length(days) > 0 do
+    offset = get_offset_nday(map, rest)
+
+    map
+    |> Map.delete(:base_wday)
+    |> Map.delete(:base_mday)
+    |> Map.delete(:base_yday)
+    |> Map.put(:nday, Nday.new(days, offset))
     |> apply_options(rest)
   end
 
@@ -161,4 +204,23 @@ defmodule Cocktail.Validation do
 
   # unhandled option, just discard and continue
   defp apply_options(map, [{_, _} | rest]), do: map |> apply_options(rest)
+
+  defp get_module_month_year(map, options) do
+    case @rule_days |> Enum.any?(&Map.has_key?(map, &1)) or
+           Enum.any?(@rule_days, fn k -> k in Keyword.keys(options) end) do
+      true -> MonthOfYearByDay
+      _ -> MonthOfYear
+    end
+  end
+
+  defp get_offset_nday(map, options) do
+    %{interval: interval} = map
+    key_months = [:months_of_year]
+
+    case key_months |> Enum.any?(&Map.has_key?(map, &1)) or
+           Enum.any?(key_months, fn k -> k in Keyword.keys(options) end) do
+      true -> :monthly
+      _ -> interval.type
+    end
+  end
 end

@@ -104,8 +104,10 @@ defmodule Cocktail.Schedule do
     * `:interval` - How often to repeat, given the frequency. For example a `:daily` rule with interval `2` would be "every other day".
     * `:count` - The number of times this rule can produce an occurrence. *(not yet support)*
     * `:until` - The end date/time after which the rule will no longer produce occurrences.
+    * `:months_of_year` - Restrict this rule to specific months of the year. (e.g. `[3, 6, 12]`)
     * `:days_of_month` - Restrict this rule to specific days of the month. (e.g. `[-1, 10, 31]`)
     * `:days` - Restrict this rule to specific days. (e.g. `[:monday, :wednesday, :friday]`)
+    * `:ndays` - Restrict this rule to specific days with nth occurrence. (e.g. `[{3, :monday}, {-1, :wednesday}, {-6, :friday}]`)
     * `:hours` - Restrict this rule to certain hours of the day. (e.g. `[10, 12, 14]`)
     * `:minutes` - Restrict this rule to certain minutes of the hour. (e.g. `[0, 15, 30, 45]`)
     * `:seconds` - Restrict this rule to certain seconds of the minute. (e.g. `[0, 30]`)
