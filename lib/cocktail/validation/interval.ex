@@ -33,6 +33,7 @@ defmodule Cocktail.Validation.Interval do
     |> Timex.diff(Timex.beginning_of_month(time), :months)
     |> mod(interval)
     |> shift_by(:months, time)
+    |> maybe_change_to_beginning_month()
   end
 
   def next_time(%__MODULE__{type: :weekly, interval: interval}, time, start_time) do

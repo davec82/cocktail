@@ -263,6 +263,21 @@ defmodule Cocktail.MonthlyTest do
     assert_icalendar_preserved(schedule)
   end
 
+  test "Every other month and friday:" do
+    schedule =
+      ~Y[2022-05-27 06:00:00 UTC]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:monthly, interval: 2, days: [:friday])
+
+    assert first_n_occurrences(schedule, 3) == [
+             ~Y[2022-05-27 06:00:00 UTC],
+             ~Y[2022-07-01 06:00:00 UTC],
+             ~Y[2022-07-08 06:00:00 UTC]
+           ]
+
+    assert_icalendar_preserved(schedule)
+  end
+
   test "Monthly on the 10th and 14th hours of the day" do
     schedule =
       ~Y[2017-01-01 06:00:00 UTC]
