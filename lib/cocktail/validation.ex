@@ -44,7 +44,7 @@ defmodule Cocktail.Validation do
           | HourOfDay.t()
           | MonthOfYear.t()
           | MinuteOfHour.t()
-          | NDay.t()
+          | Nday.t()
           | SecondOfMinute.t()
           | TimeOfDay.t()
           | TimeRange.t()
