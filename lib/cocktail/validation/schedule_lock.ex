@@ -4,6 +4,7 @@ defmodule Cocktail.Validation.ScheduleLock do
   alias Cocktail.Util
   import Integer, only: [mod: 2]
   import Cocktail.Validation.Shift
+  import Cocktail.Util
 
   @type lock :: :second | :minute | :hour | :wday | :mday | :yday
 
@@ -35,8 +36,7 @@ defmodule Cocktail.Validation.ScheduleLock do
 
   def next_time(%__MODULE__{type: :mday}, time, start_time) do
     if start_time.day > Calendar.ISO.days_in_month(time.year, time.month) do
-      shifted = time |> Timex.shift(months: 1) |> Util.normalize_microsecond()
-      next_time(%__MODULE__{type: :mday}, shifted, start_time)
+      next_time(%__MODULE__{type: :mday}, shift_time(time, months: 1), start_time)
     else
       next_mday_time(%__MODULE__{type: :mday}, time, start_time)
     end
@@ -87,7 +87,7 @@ defmodule Cocktail.Validation.ScheduleLock do
           |> Timex.diff(time, :days)
 
         start_time_day_of_month ->
-          next_month_date = time |> Timex.shift(months: 1) |> Util.normalize_microsecond()
+          next_month_date = shift_time(time, months: 1)
           # Timex.set already handle the marginal case like setting a day of month more than the month contains
           next_month_date
           |> Timex.set(day: start_time_day_of_month)

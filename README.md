@@ -1,4 +1,4 @@
-# Cocktail ![Cocktail](./logo_with_border.png)
+# Cocktail
 
 [![CI
 Status](https://github.com/peek-travel/cocktail/workflows/CI/badge.svg)](https://github.com/peek-travel/cocktail/actions)
@@ -146,7 +146,7 @@ iex> i_calendar = Cocktail.Schedule.to_i_calendar(schedule)
 
 ## Roadmap
 
--   [ ] investigate and fix DST bugs when using zoned DateTime
+-   [x] investigate and fix DST bugs when using zoned DateTime
 -   [ ] support all iCalendar RRULE options
 -   [ ] support week-start option
 -   [ ] support iCalendar EXRULE
