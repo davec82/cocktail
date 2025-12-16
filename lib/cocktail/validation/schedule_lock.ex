@@ -44,7 +44,7 @@ defmodule Cocktail.Validation.ScheduleLock do
 
   def next_time(%__MODULE__{type: :yday}, time, start_time) do
     if start_time.day > Calendar.ISO.days_in_month(time.year, time.month) do
-      shifted = time |> Timex.shift(months: 1) |> Util.normalize_microsecond()
+      shifted = time |> Timex.shift(months: 1) |> Util.no_ms()
       next_time(%__MODULE__{type: :yday}, shifted, start_time)
     else
       maybe_is_leap_year(%__MODULE__{type: :yday}, time, start_time)
@@ -129,6 +129,6 @@ defmodule Cocktail.Validation.ScheduleLock do
   end
 
   defp maybe_last_year_day(time, _start_time) do
-    time |> Timex.shift(years: 1) |> Util.normalize_microsecond()
+    time |> Timex.shift(years: 1) |> Util.no_ms()
   end
 end

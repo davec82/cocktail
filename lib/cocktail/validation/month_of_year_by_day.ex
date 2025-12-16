@@ -54,6 +54,6 @@ defmodule Cocktail.Validation.MonthOfYearByDay do
     time
     |> Timex.shift(months: 1)
     |> Timex.set(day: 1)
-    |> Util.normalize_microsecond()
+    |> Util.no_ms()
   end
 end

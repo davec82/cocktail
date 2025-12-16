@@ -71,7 +71,7 @@ defmodule Cocktail.Validation.Nday do
         time
         |> Timex.beginning_of_year()
         |> Timex.shift(days: nday)
-        |> Util.normalize_microsecond()
+        |> Util.no_ms()
 
       false ->
         {next_time, next_first_month_date, next_last_month_date} = next_date(freq, time)
@@ -95,7 +95,7 @@ defmodule Cocktail.Validation.Nday do
       time
       |> Timex.shift(months: 1)
       |> Timex.set(day: 1)
-      |> Util.normalize_microsecond()
+      |> Util.no_ms()
 
     {first_date, last_date} = choose_first_last_dates(freq, next_time)
     {next_time, first_date, last_date}
