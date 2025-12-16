@@ -1,6 +1,7 @@
 defmodule Cocktail.Validation.DayOfMonth do
   @moduledoc false
 
+  alias Cocktail.Util
   import Cocktail.Validation.Shift
   import Cocktail.Util, only: [next_gte: 2]
 
@@ -31,6 +32,7 @@ defmodule Cocktail.Validation.DayOfMonth do
           next_month_time =
             time
             |> Timex.shift(months: 1)
+            |> Util.normalize_microsecond()
 
           next_month_normalized_days = Enum.map(days, &normalize_day_of_month(&1, next_month_time))
           next_month_earliest_day = Timex.set(next_month_time, day: hd(Enum.sort(next_month_normalized_days)))

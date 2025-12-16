@@ -9,5 +9,6 @@ defmodule Cocktail.TestSupport.DateTimeSigil do
     "#{date} #{time}"
     |> NaiveDateTime.from_iso8601!()
     |> Timex.to_datetime(zone)
+    |> Map.put(:microsecond, {0, 0})
   end
 end

@@ -1,6 +1,8 @@
 defmodule Cocktail.Validation.Shift do
   @moduledoc false
 
+  alias Cocktail.Util
+
   @type change_type :: :no_change | :updated | :change
 
   @type result :: {change_type, Cocktail.time()}
@@ -21,6 +23,7 @@ defmodule Cocktail.Validation.Shift do
       |> shift("#{type}": amount)
       |> apply_option(option)
       |> maybe_dst_change(time)
+      |> Util.normalize_microsecond()
 
     {:change, new_time}
   end
@@ -49,8 +52,8 @@ defmodule Cocktail.Validation.Shift do
     shifted_time = shift(new_time, seconds: -dst_diff)
 
     case DateTime.compare(shifted_time, time) do
-      :eq -> new_time
-      _ -> shifted_time
+      :gt -> shifted_time
+      _ -> new_time
     end
   end
 end

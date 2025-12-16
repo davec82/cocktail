@@ -1,6 +1,7 @@
 defmodule Cocktail.Validation.MonthOfYear do
   @moduledoc false
 
+  alias Cocktail.Util
   import Cocktail.Validation.Shift
   # import Cocktail.Util, only: [next_gte: 2]
 
@@ -68,5 +69,6 @@ defmodule Cocktail.Validation.MonthOfYear do
     time
     |> Timex.shift(months: 1)
     |> Timex.set(day: 1)
+    |> Util.normalize_microsecond()
   end
 end

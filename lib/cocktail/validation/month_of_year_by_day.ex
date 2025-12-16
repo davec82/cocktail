@@ -1,6 +1,7 @@
 defmodule Cocktail.Validation.MonthOfYearByDay do
   @moduledoc false
 
+  alias Cocktail.Util
   import Cocktail.Validation.Shift
 
   @type t :: %__MODULE__{months: [Cocktail.month_of_year()]}
@@ -53,5 +54,6 @@ defmodule Cocktail.Validation.MonthOfYearByDay do
     time
     |> Timex.shift(months: 1)
     |> Timex.set(day: 1)
+    |> Util.normalize_microsecond()
   end
 end

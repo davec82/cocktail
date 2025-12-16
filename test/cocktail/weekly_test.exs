@@ -184,4 +184,32 @@ defmodule Cocktail.WeeklyTest do
              ~Y[2017-01-15 06:00:00 America/Los_Angeles]
            ]
   end
+
+  test "Weekly on Saturday and Sunday with DST transition in Europe/Rome" do
+    # Start: March 4, 2026 (Wednesday) at 01:00:00 Europe/Rome
+    # Repeat: every Saturday and Sunday
+    # Until: April 10, 2026
+    # DST change: March 29, 2026 at 02:00 (clocks spring forward to 03:00)
+    times =
+      ~Y[2026-03-04 01:00:00 Europe/Rome]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:weekly, days: [:saturday, :sunday], until: ~Y[2026-04-10 23:59:59 Europe/Rome])
+      |> Cocktail.Schedule.occurrences()
+      |> Enum.to_list()
+
+    assert times == [
+             # Before DST (CET +01:00)
+             ~Y[2026-03-07 01:00:00 Europe/Rome],
+             ~Y[2026-03-08 01:00:00 Europe/Rome],
+             ~Y[2026-03-14 01:00:00 Europe/Rome],
+             ~Y[2026-03-15 01:00:00 Europe/Rome],
+             ~Y[2026-03-21 01:00:00 Europe/Rome],
+             ~Y[2026-03-22 01:00:00 Europe/Rome],
+             ~Y[2026-03-28 01:00:00 Europe/Rome],
+             ~Y[2026-03-29 01:00:00 Europe/Rome],
+             # After DST (CEST +02:00)
+             ~Y[2026-04-04 01:00:00 Europe/Rome],
+             ~Y[2026-04-05 01:00:00 Europe/Rome]
+           ]
+  end
 end

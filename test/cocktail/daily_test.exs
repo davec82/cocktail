@@ -209,6 +209,27 @@ defmodule Cocktail.DailyTest do
            ]
   end
 
+  test "generating occurrences with spring transition on dst hour change" do
+    # Known bug: infinite loop when crossing DST with day-of-week filter
+    # After Sunday March 29 (day before DST), it gets stuck instead of advancing to Saturday April 4
+    schedule =
+      ~Y[2026-03-27 01:00:00 Europe/Rome]
+      |> Schedule.new()
+      |> Schedule.add_recurrence_rule(:daily)
+
+    times = schedule |> Schedule.occurrences() |> Enum.take(6)
+
+    assert times == [
+             # ~Y[2026-03-21 01:00:00 Europe/Rome],
+             ~Y[2026-03-27 01:00:00 Europe/Rome],
+             ~Y[2026-03-28 01:00:00 Europe/Rome],
+             ~Y[2026-03-29 01:00:00 Europe/Rome],
+             ~Y[2026-03-30 01:00:00 Europe/Rome],
+             ~Y[2026-03-31 01:00:00 Europe/Rome],
+             ~Y[2026-04-01 01:00:00 Europe/Rome]
+           ]
+  end
+
   test "generating occurrences with fall back transition on dst hour change" do
     schedule =
       ~Y[2022-11-05 02:00:00 America/Los_Angeles]

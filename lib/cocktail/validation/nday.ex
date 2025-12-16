@@ -1,6 +1,7 @@
 defmodule Cocktail.Validation.Nday do
   @moduledoc false
 
+  alias Cocktail.Util
   import Cocktail.Validation.Shift
 
   import Integer, only: [mod: 2]
@@ -67,7 +68,10 @@ defmodule Cocktail.Validation.Nday do
 
     case nday >= day_of_year and nday <= days_diff do
       true ->
-        Timex.shift(Timex.beginning_of_year(time), days: nday)
+        time
+        |> Timex.beginning_of_year()
+        |> Timex.shift(days: nday)
+        |> Util.normalize_microsecond()
 
       false ->
         {next_time, next_first_month_date, next_last_month_date} = next_date(freq, time)
@@ -87,7 +91,12 @@ defmodule Cocktail.Validation.Nday do
   end
 
   defp next_date(freq, time) do
-    next_time = Timex.shift(time, months: 1) |> Timex.set(day: 1)
+    next_time =
+      time
+      |> Timex.shift(months: 1)
+      |> Timex.set(day: 1)
+      |> Util.normalize_microsecond()
+
     {first_date, last_date} = choose_first_last_dates(freq, next_time)
     {next_time, first_date, last_date}
   end
